@@ -13,7 +13,6 @@ from google.genai import types
 
 from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
-from crewai_tools import FileWriterTool
 
 cloud_logging_client = google.cloud.logging.Client()
 cloud_logging_client.setup_logging()
@@ -47,7 +46,7 @@ def append_to_state(
 
 
 # Agents
-
+'''
 file_writer = Agent(
     name="file_writer",
     model=model_name,
@@ -75,14 +74,7 @@ file_writer = Agent(
     """,
     generate_content_config=types.GenerateContentConfig(
         temperature=0,
-    ),
-    tools=[
-        CrewaiTool(
-            name="file_writer_tool",
-            description=("Writes a file to disk"),
-            tool=FileWriterTool(),
-        )
-    ],
+    )
 )
 
 box_office_researcher = Agent(
@@ -230,7 +222,7 @@ film_concept_team = SequentialAgent(
         #screenwriter,
         file_writer
     ],
-)
+)'''
 
 root_agent = Agent(
     name="greeter",
@@ -246,5 +238,5 @@ root_agent = Agent(
         temperature=0,
     ),
     tools=[append_to_state],
-    sub_agents=[film_concept_team],
+    #sub_agents=[film_concept_team],
 )
