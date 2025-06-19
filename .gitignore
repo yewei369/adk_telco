@@ -1,5 +1,5 @@
-./play_agent/__pycache__/*
-./telco_agent/__pycache__/*
+play_agent/__pycache__/*
+telco_agent/__pycache__/*
 
 .bash_history
 .bash_logout
