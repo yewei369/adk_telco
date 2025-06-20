@@ -1,6 +1,7 @@
 from vertexai import rag
 from vertexai.generative_models import GenerativeModel, Tool
 import vertexai
+import logging
 
 # -----------------------
 # 3. Create RAG Retrieval Tool
@@ -15,7 +16,7 @@ rag_retrieval_tool = Tool.from_retrieval(
         source=rag.VertexRagStore(
             rag_resources=[
                 rag.RagResource(
-                    rag_corpus='northern_lights_corpus',  # Currently only 1 corpus is allowed.
+                    rag_corpus='projects/hacker2025-team-212-dev/locations/us-central1/ragCorpora/4611686018427387904',  # Currently only 1 corpus is allowed.
                     # Optional: supply IDs from `rag.list_files()`.
                     # rag_file_ids=["rag-file-1", "rag-file-2", ...],
                 )
@@ -48,8 +49,8 @@ def query_rag_tool(query: str):
     return {"response": response.text}
 
 # Example query
-#query = "What is RAG and why is it helpful?"
+query = "What can I do with AX11000 having no connection to internet?"
 
 # Run the query and print the response
-#rag_response = query_rag_tool(query, llm)
-#print(rag_response)
+rag_response = query_rag_tool(query)
+print(rag_response)
