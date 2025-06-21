@@ -4,7 +4,7 @@ import asyncio
 
 from vertexai.preview import reasoning_engines
 
-from agent import root_agent
+from telco_agent.agent import root_agent
 
 logging.basicConfig(level=logging.INFO)
 cloud_logging_client = google.cloud.logging.Client()

@@ -72,6 +72,6 @@ def import_gcs_files_to_corpus(bucket_name, corpus_name):
     )
 
 #Call the upload function
-import_gcs_files_to_corpus(GCS_BUCKET_NAME, rag_corpus.name)
+#import_gcs_files_to_corpus(GCS_BUCKET_NAME, rag_corpus.name)
 
 

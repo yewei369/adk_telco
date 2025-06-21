@@ -1,23 +1,26 @@
 import os
 import logging
 import google.cloud.logging
+import json
 
 from dotenv import load_dotenv
 
 from google.adk import Agent
 from google.adk.agents import SequentialAgent, LoopAgent, ParallelAgent
 from google.adk.tools import google_search  # The Google Search tool
+#from google.adk.tools.tool import Tool
 from google.adk.tools.tool_context import ToolContext
 from google.adk.tools.langchain_tool import LangchainTool  # import
 #from google.adk.tools.crewai_tool import CrewaiTool
 from google.genai import types
 
-from langchain_community.tools import WikipediaQueryRun
-from langchain_community.utilities import WikipediaAPIWrapper
+#from langchain_community.tools import WikipediaQueryRun
+#from langchain_community.utilities import WikipediaAPIWrapper
 #from crewai_tools import FileWriterTool
+from google.cloud import storage
 
 from .rag import query_rag_tool
-from callback_logging import log_query_to_model, log_model_response
+from .callback_logging import log_query_to_model, log_model_response
 
 cloud_logging_client = google.cloud.logging.Client()
 cloud_logging_client.setup_logging()
@@ -58,8 +61,100 @@ def fixed_diagnos(post_code: str):
     return {"diag_result": diag_result}
 
 
+def live_agent(tool_context: ToolContext, conversation_context: dict):
+    '''Pass conversation context to the live agent in Teams. 
+       This is a dummy function and will developed and replaced by a real Teams session
+    '''
+
+    logging.info(f"Initiating handoff to Teams with context: {json.dumps(conversation_context, indent=2)}")
+    return "Handoff to a live agent in Teams initiated successfully."
+
+def fixed_calendar(date: str, time: str, issue_type: str, customer_name: str, city: str):
+    '''Given date, time, customer_name, city, book a meeting for the customer
+    '''
+    ## replace the following with a working Google_Calendar_Tool
+    logging.info(f'The meeting has been arranged for {customer_name} regarding {issue_type} in {city} at {date} {time}')
+    return {"status": "success"}
+
+def logger_bucket(session_id: str, content: str) -> dict:
+    '''Archives raw conversational transcripts or large data outputs to Cloud Storage as json files.
+    Args:
+        session_id: id of conversation session
+        content: conversation history and context
+    Returns:
+        dict[str, str]: {"status": "success"}
+    '''
+    blob_path = f"logs/{session_id}"
+    bucket = storage.Client().bucket('northern_lights_bucket')
+    blob = bucket.blob(blob_path)
+    try:
+        blob.upload_from_string(content, content_type="application/json")
+        logging.info(f"Uploaded {file_name} for session '{session_id}' to gs://{bucket.name}/{blob_path}")
+        return {"status": "success", "gcs_uri": f"gs://{bucket.name}/{blob_path}"}
+    except Exception as e:
+        logging.error(f"Error uploading to GCS: {e}")
+        return {"status": "error", "message": f"Error uploading to GCS: {e}"}
 
 # --- Agents ---
+
+## 5: Logging_agent
+log_agent = Agent(
+    name="log_agent",
+    model=model_name,
+    description="Logs all conversational and diagnostic data for analytics and knowledge base.",
+    instruction="""
+    Logs the conversation and troubleshooting process to Cloud Storage for historical tracking.
+    Save the context using the tool 'logger_bucket'
+    """,
+    before_model_callback=log_query_to_model,
+    after_model_callback=log_model_response,
+    generate_content_config=types.GenerateContentConfig(temperature=0,),
+    tools=[append_to_state,logger_bucket],
+    sub_agents=[],
+)
+
+## 4: Booking_agent
+booking_agent = Agent(
+    name="booking_agent",
+    model=model_name,
+    description="Schedules technician visits or initiates firmware updates, integrating with Google Calendar and Meet.",
+    instruction="""
+    Automatically schedules technician visits using Google Calendar.
+    Use tool 'fixed_calendar' to create Google Meet links for virtual technician calls if requested.
+    Confirm date, time, {{issue_type?}}, {{device?}}, {{customer_name?}}, and {{city?}}.
+    """,
+    before_model_callback=log_query_to_model,
+    after_model_callback=log_model_response,
+    generate_content_config=types.GenerateContentConfig(temperature=0,),
+    tools=[append_to_state,live_agent,fixed_calendar],
+    sub_agents=[],
+)
+
+
+## 3: Reroute_agent
+reroute_agent = Agent(
+    name="reroute_agent",
+    model=model_name,
+    description="Determines escalation or retry conditions and orchestrates handoffs to live agents.",
+    instruction="""
+    INSTRUCTIONS:
+    Evaluates diagnostic results and troubleshooting status.
+    - if automated troubleshooting from 'rag_agent' succeeds, the diglog will end and transfer to 'log_agent'
+    - if automated troubleshooting from 'rag_agent' fails, or firmware updating required, or booking a technician visit is asked by the user, transfer to 'booking_agent'
+    - after booking a technical visit, if the user is satisfied with the arrangement, the diglog will end and transfer to 'log_agent'    
+    - if automated troubleshooting from 'rag_agent' fails, gracefully hand over to a human agent in Microsoft Teams.
+    - in case no relevant guidance or suggestion is found, instead of asking the user to turn to manufacturer for more investigation or help, transfer to 'booking_agent' or live agent
+    - after interacting with live agent and confirmed if the user is satisfied, the diglog will end and transfer to 'log_agent'
+    - live agent will be connected only if there is no relevant guidance or suggestion found by 'rag_agent' OR it's required by the customer
+
+    """,
+    before_model_callback=log_query_to_model,
+    after_model_callback=log_model_response,
+    generate_content_config=types.GenerateContentConfig(temperature=0,),
+    tools=[append_to_state,live_agent],
+    sub_agents=[booking_agent,log_agent],
+)
+
 
 ## 2: Search_agent
 rag_agent = Agent(
@@ -67,21 +162,22 @@ rag_agent = Agent(
     model=model_name,
     description="Searches knowledge base and external sources for troubleshooting steps and provides fixes.",
     instruction="""
-
     INSTRUCTIONS:
     Based on diagnostic results and customer issue, always aim to provide actionable troubleshooting steps or escalate if no solution is found.
 
     - if {{diag_result??}} is 'device_issue', kindly ask the user for the device item name or number, and save it in the state key 'device'
     - then search in knowledge base for the troubleshooting steps related to the {{issue_type??}} and {{device??}}, using the tool 'query_rag_tool' with dialog history as 'query' to the tool. 
     - Based on the response of 'query_rag_tool', formulate an answer to the user
-    - if no useful information found in knowledge base, use the tool 'google_search' to turn to public manual and information base for help
+    - if no useful information found in knowledge base, turn to public manual and information base for help
+    - after giving troubleshooting suggestions, transfer to the next agent 'reroute_agent' 
     """,
     before_model_callback=log_query_to_model,
     after_model_callback=log_model_response,
     generate_content_config=types.GenerateContentConfig(temperature=0,),
-    tools=[], #[append_to_state,query_rag_tool,google_search],
-    sub_agents=[],
+    tools=[append_to_state,query_rag_tool],
+    sub_agents=[reroute_agent],
 )
+
 
 ## 1: Diagnostic_agent
 diagnostic_agent = Agent(
@@ -89,7 +185,6 @@ diagnostic_agent = Agent(
     model=model_name,
     description="Performs automated network and device diagnostics, integrates with DownDetector.se and OSS.",
     instruction="""
-
     INSTRUCTIONS:
     Your goal is to detect if the issue happens in some special area that suffers from the outage based on provided {{post_code?}}.
 
