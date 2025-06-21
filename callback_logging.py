@@ -1,6 +1,5 @@
 import logging
 import google.cloud.logging
-
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmResponse, LlmRequest
 
