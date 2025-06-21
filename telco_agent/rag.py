@@ -50,9 +50,10 @@ def query_rag_tool(query: str):
         logging.error(f"Error in query_rag_tool: {e}")
         return {"error": str(e)}
 
-
+'''
 # Example query
 query = "What can I do with AX11000 having no connection to internet?"
 # Run the query and print the response
 rag_response = query_rag_tool(query)
 print(rag_response)
+'''
