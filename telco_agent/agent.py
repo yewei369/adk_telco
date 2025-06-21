@@ -79,7 +79,7 @@ rag_agent = Agent(
     before_model_callback=log_query_to_model,
     after_model_callback=log_model_response,
     generate_content_config=types.GenerateContentConfig(temperature=0,),
-    tools=[append_to_state,google_search,query_rag_tool],
+    tools=[], #[append_to_state,query_rag_tool,google_search],
     sub_agents=[],
 )
 
@@ -95,7 +95,7 @@ diagnostic_agent = Agent(
 
     - use the tool 'fixed_diagnos' to determine the diagnos result, and use tool 'append_to_state' to store it in the state key 'diag_result'
     - if 'diag_result' is 'outage', then tell the customer elegantly and politely to wait until the ungoing maintenance is finished
-    - if 'diag_result' is 'device_issue', tell the customer issue probably lies in the pyhisical device
+    - if 'diag_result' is 'device_issue', tell the customer issue probably lies in the pyhisical device, and transfer to the 'troubleshooting_rag_agent'
 
     """,
     before_model_callback=log_query_to_model,

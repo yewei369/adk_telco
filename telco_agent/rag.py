@@ -30,27 +30,29 @@ rag_retrieval_tool = Tool.from_retrieval(
 # 4. Integrate Tool into Agent and Run Query
 # -----------------------
 
-
-
 def query_rag_tool(query: str):
     """
     Takes the RAG tool and generated a response to a query
     Args:
         query: the query and logged dialog with the user
     Returns:
-        str: the generated response
+        dict: A dictionary containing the RAG retrieval results.
     """
 
-    # Create a Gemini model instance and pass in the tool
-    llm = GenerativeModel(model_name="gemini-2.0-flash-001", tools=[rag_retrieval_tool])
-    response = llm.generate_content(query)
+    try:
+        # Create a Gemini model instance and pass in the tool
+        llm = GenerativeModel(model_name="gemini-2.0-flash-001", tools=[rag_retrieval_tool])
+        response = llm.generate_content(query)
 
-    logging.info(f"Retrieved response:{response.text}")
-    return {"response": response.text}
+        logging.info(f"Retrieved RAG response:{response.text}")
+        return {"response": response.text}
+    except Exception as e:
+        logging.error(f"Error in query_rag_tool: {e}")
+        return {"error": str(e)}
+
 
 # Example query
 query = "What can I do with AX11000 having no connection to internet?"
-
 # Run the query and print the response
 rag_response = query_rag_tool(query)
 print(rag_response)

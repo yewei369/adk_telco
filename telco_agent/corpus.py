@@ -9,7 +9,7 @@ import vertexai
 PROJECT_ID = "hacker2025-team-212-dev"
 LOCATION = "us-central1" # e.g., "us-central1"
 GCS_BUCKET_NAME = "northern_lights_bucket"
-RAG_CORPUS_NAME = "northern_lights_corpus"
+RAG_CORPUS_NAME = "northern_lights_rag_corpus"
 EMBEDDING_MODEL = "publishers/google/models/text-embedding-005"  # Or choose another suitable model
 
 
