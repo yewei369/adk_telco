@@ -145,7 +145,7 @@ reroute_agent = Agent(
     - if automated troubleshooting from 'rag_agent' fails, gracefully hand over to a human agent in Microsoft Teams.
     - in case no relevant guidance or suggestion is found, instead of asking the user to turn to manufacturer for more investigation or help, transfer to 'booking_agent' or live agent
     - after interacting with live agent and confirmed if the user is satisfied, the diglog will end and transfer to 'log_agent'
-    - live agent will be connected only if there is no relevant guidance or suggestion found by 'rag_agent' OR it's required by the customer
+    - live agent will be connected ONLY IF there is no relevant guidance or suggestion found by 'rag_agent' OR it's required by the customer
 
     """,
     before_model_callback=log_query_to_model,
@@ -165,11 +165,11 @@ rag_agent = Agent(
     INSTRUCTIONS:
     Based on diagnostic results and customer issue, always aim to provide actionable troubleshooting steps or escalate if no solution is found.
 
-    - if {{diag_result??}} is 'device_issue', kindly ask the user for the device item name or number, and save it in the state key 'device'
+    - if {{diag_result??}} is 'device_issue', kindly ask the user for the device item name or number, and save it in the state key 'device'. DO NOT transfer to next agent if you have not got your question answered
     - then search in knowledge base for the troubleshooting steps related to the {{issue_type??}} and {{device??}}, using the tool 'query_rag_tool' with dialog history as 'query' to the tool. 
     - Based on the response of 'query_rag_tool', formulate an answer to the user
     - if no useful information found in knowledge base, turn to public manual and information base for help
-    - after giving troubleshooting suggestions, transfer to the next agent 'reroute_agent' 
+    - after giving troubleshooting suggestions, transfer to the next agent 'reroute_agent'. BUT with no confirmation from the user wheather the problem gets solved or not, you should not transfer to the next agent.
     """,
     before_model_callback=log_query_to_model,
     after_model_callback=log_model_response,

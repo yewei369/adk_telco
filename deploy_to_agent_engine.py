@@ -20,7 +20,7 @@ vertexai.init(
 )'''
 
 remote_app = agent_engines.create(
-    display_name=os.getenv("APP_NAME", "Agent App"),
+    display_name=os.getenv("APP_NAME", "Agent App 1"),
     agent_engine=root_agent,
     requirements=[
         'fire==0.7.0',

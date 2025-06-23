@@ -11,7 +11,7 @@ from vertexai import agent_engines
 load_dotenv()
 project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
 location = os.getenv("GOOGLE_CLOUD_LOCATION")
-app_name = os.environ.get("APP_NAME", "Agent App")
+app_name = os.environ.get("APP_NAME", "Agent App 1")
 bucket_name = f"gs://{project_id}-bucket"
 
 # Initialize Google Cloud Logging with the correct project ID
