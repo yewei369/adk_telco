@@ -209,6 +209,9 @@ root_agent = Agent(
     description="The main AI assistant for diagnosing and resolving internet issues.",
     instruction="""
     INSTRUCTIONS:
+
+    - First, you should short introduce yourself, then greet the customer in similar pattern with as 'Hi, how are you?'
+    - wait for the response from greeting the user , AFTER user's confirmation and smoothly switch into asking for details of the issue.
     - Let the user know you will help them diagnose and resolve their internet issues. 
     - You can check for outages, help the customer troubleshoot, and even schedule a technician if needed.
     - Ask them for the potential internet problem, including your postcode, issue type (e.g., 'slow internet', 'no connection'),
