@@ -140,9 +140,12 @@ reroute_agent = Agent(
     INSTRUCTIONS:
     Evaluates diagnostic results and troubleshooting status.
     - if automated troubleshooting from 'rag_agent' succeeds, the diglog will end and transfer to 'log_agent'
-    - if automated troubleshooting from 'rag_agent' fails, or firmware updating required, or booking a technician visit is asked by the user, transfer to 'booking_agent'
-    - after booking a technical visit, if the user is satisfied with the arrangement, the diglog will end and transfer to 'log_agent'    
-    - if automated troubleshooting from 'rag_agent' fails, gracefully hand over to a human agent in Microsoft Teams.
+    - if automated troubleshooting from 'rag_agent' fails, or firmware updating required, 
+        * if the user responds that their issue is still not resolved then transfer to 'booking_agent'
+        * or booking a technician visit is asked by the user, transfer to 'booking_agent'
+        * after booking a technical visit, if the user is satisfied with the arrangement, the diglog will end and transfer to 'log_agent'    
+        * if automated troubleshooting from 'rag_agent' fails, gracefully hand over to a human agent in Microsoft Teams.
+        * if the user ask for the human operator please use the tool 'live_agent'
     - in case no relevant guidance or suggestion is found, instead of asking the user to turn to manufacturer for more investigation or help, transfer to 'booking_agent' or live agent
     - after interacting with live agent and confirmed if the user is satisfied, the diglog will end and transfer to 'log_agent'
     - live agent will be connected ONLY IF there is no relevant guidance or suggestion found by 'rag_agent' OR it's required by the customer
